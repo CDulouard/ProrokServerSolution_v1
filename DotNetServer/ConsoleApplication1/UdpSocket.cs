@@ -21,7 +21,7 @@ namespace ConsoleApplication1
 
         private IPEndPoint _remoteUser;
         private string _hashPass;
-        
+
         private class State
         {
             public byte[] Buffer;
@@ -33,7 +33,8 @@ namespace ConsoleApplication1
         }
 
 
-        /// <summary>This method creat a UdpSocket object.
+        /// <summary>
+        /// This method creat a UdpSocket object.
         /// <example>For example:
         /// <code>
         ///    UdpSocket socket = new UdpSocket();
@@ -49,7 +50,8 @@ namespace ConsoleApplication1
             _recv = null;
         }
 
-        /// <summary>This method starts the server with (<paramref name="ipAddressServer"/>) as ip
+        /// <summary>
+        /// This method starts the server with (<paramref name="ipAddressServer"/>) as ip
         /// on (<paramref name="portServer"/>) port. It is also possible to set a (<paramref name="password"/>) and
         /// change the (<paramref name="bufferSize"/>).
         /// <example>For example:
@@ -82,7 +84,8 @@ namespace ConsoleApplication1
             Receive();
         }
 
-        /// <summary>This method starts the server.
+        /// <summary>
+        /// This method starts the server.
         /// <example>For example:
         /// <code>
         ///    UdpSocket socket = new UdpSocket();
@@ -100,7 +103,8 @@ namespace ConsoleApplication1
         }
 
 
-        /// <summary> This method can send a message to a given machine. The ip of the machine can be specified
+        /// <summary>
+        /// This method can send a message to a given machine. The ip of the machine can be specified
         /// in the (<paramref name="targetIp"/>) parameter and the port in the (<paramref name="targetPort"/>)
         /// parameter. The message is specified in the (<paramref name="text"/>) parameter.
         /// <example>For example:
@@ -134,8 +138,9 @@ namespace ConsoleApplication1
                 Console.WriteLine("Destination unavailable");
             }
         }
-        
-        /// <summary> This method can send a message to a given machine. The IPEndPoint corresponding to the machine
+
+        /// <summary>
+        /// This method can send a message to a given machine. The IPEndPoint corresponding to the machine
         /// is specified by the (<paramref name="target"/>) parameter.
         /// The message is specified in the (<paramref name="text"/>) parameter.
         /// <example>For example:
@@ -168,7 +173,8 @@ namespace ConsoleApplication1
             }
         }
 
-        /// <summary> This method can creat a new connection to a given machine.
+        /// <summary>
+        /// This method can creat a new connection to a given machine.
         /// The parameter (<paramref name="targetEndPoint"/>) is used to give both ip and port for the machine.
         /// <example>For example:
         /// <code>
@@ -186,9 +192,10 @@ namespace ConsoleApplication1
             IsConnected = true;
             Send(new Message(1, "{\"connection_status\" : 1 }").ToJson());
         }
-        
 
-        /// <summary> Send a message to the machine we are connected with.
+
+        /// <summary>
+        /// Send a message to the machine we are connected with.
         /// The message to send have to be specified in the (<paramref name="text"/>) parameter.
         /// <example>For example:
         /// <code>
@@ -214,7 +221,8 @@ namespace ConsoleApplication1
             }, _state);
         }
 
-        /// <summary>This method hash the (<paramref name="password"/>) using SHA1 algorithm.
+        /// <summary>
+        /// This method hash the (<paramref name="password"/>) using SHA1 algorithm.
         /// <example>For example:
         /// <code>
         ///    var hashPass = CryptPass("test");
@@ -232,7 +240,8 @@ namespace ConsoleApplication1
             return HexStringFromBytes(hashBytes);
         }
 
-        /// <summary>This method convert the byte array (<paramref name="bytes"/>) into string in hexadecimal format.
+        /// <summary>
+        /// This method convert the byte array (<paramref name="bytes"/>) into string in hexadecimal format.
         /// <example>For example:
         /// <code>
         ///    byte[] numbers = { 0, 16, 104, 213 }
@@ -255,7 +264,8 @@ namespace ConsoleApplication1
             return sb.ToString();
         }
 
-        /// <summary>This method is called when the server starts. It receive the message and call the
+        /// <summary>
+        /// This method is called when the server starts. It receive the message and call the
         /// Handler method.
         /// </summary>
         private void Receive()
@@ -276,12 +286,20 @@ namespace ConsoleApplication1
             }
         }
 
-        /// <summary> This method manage the behaviour of the server when it receive a message.
+        /// <summary>
+        /// This method manage the behaviour of the server when it receive a message.
         /// </summary>
         private void Handler(State so, int nBytes)
         {
-            Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes,
-                Encoding.ASCII.GetString(so.Buffer, 0, nBytes));
+            var rcvString = Encoding.ASCII.GetString(so.Buffer, 0, nBytes);
+            if (!Message.IsMessage(rcvString))
+            {
+                Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes, rcvString);
+            }
+            else
+            {
+                Console.WriteLine("rcv msg");
+            }
         }
 
         public IPEndPoint RemoteUser
@@ -292,7 +310,7 @@ namespace ConsoleApplication1
 
         public bool IsActive { get; private set; }
         public bool IsConnected { get; set; }
-        
+
 
         /// <summary>This method returns a random string with a length specified in the
         /// (<paramref name="length"/>) parameter.
@@ -304,10 +322,10 @@ namespace ConsoleApplication1
         /// </example>
         /// </summary>
         ///<param name="length">The length of the random string</param>
-        ///<returns>A string random string with specified length</returns>
+        ///<returns>A random string with specified length</returns>
         public static string CreateRandomString(int length)
         {
-            var strBuild = new StringBuilder();  
+            var strBuild = new StringBuilder();
             var random = new Random();
 
             for (var i = 0; i < length; i++)
@@ -315,10 +333,10 @@ namespace ConsoleApplication1
                 var flt = random.NextDouble();
                 var shift = Convert.ToInt32(Math.Floor(25 * flt));
                 var letter = Convert.ToChar(shift + 65);
-                strBuild.Append(letter);  
+                strBuild.Append(letter);
             }
+
             return strBuild.ToString();
         }
     }
-    
 }

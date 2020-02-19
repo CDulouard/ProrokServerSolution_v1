@@ -4,3 +4,6 @@ D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Co
 D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\obj\Debug\ConsoleApplication1.csproj.CoreCompileInputs.cache
 D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\obj\Debug\ConsoleApplication1.exe
 D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\obj\Debug\ConsoleApplication1.pdb
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\bin\Debug\Newtonsoft.Json.dll
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\bin\Debug\Newtonsoft.Json.xml
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\ConsoleApplication1\obj\Debug\ConsoleApplication1.csproj.CopyComplete
