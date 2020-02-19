@@ -19,9 +19,9 @@ namespace ConsoleApplication1
 
         private EndPoint _epFrom = new IPEndPoint(IPAddress.Any, 0);
 
+        private IPEndPoint _remoteUser;
         private string _hashPass;
-
-
+        
         private class State
         {
             public byte[] Buffer;
@@ -134,6 +134,39 @@ namespace ConsoleApplication1
                 Console.WriteLine("Destination unavailable");
             }
         }
+        
+        /// <summary> This method can send a message to a given machine. The IPEndPoint corresponding to the machine
+        /// is specified by the (<paramref name="target"/>) parameter.
+        /// The message is specified in the (<paramref name="text"/>) parameter.
+        /// <example>For example:
+        /// <code>
+        ///    UdpSocket socket = new UdpSocket();
+        ///    socket.Start("127.0.0.1", 27000);
+        ///    socket.SendTo("127.0.0.1", 27000, "Hello");
+        /// </code>
+        /// This code creat a new udpSocket and use it to send the message "Hello" to itself.
+        /// </example>
+        /// </summary>
+        ///<param name="target">The IPEndPoint used to bind the socket on</param>
+        ///<param name="text">The message to send as a string </param>
+        public void SendTo(IPEndPoint target, string text)
+        {
+            try
+            {
+                var data = Encoding.ASCII.GetBytes(text);
+                var sendState = new State(_bufSize);
+                _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, target, (ar) =>
+                {
+                    var so = (State) ar.AsyncState;
+                    var bytes = _socket.EndSend(ar);
+                    Console.WriteLine("SEND: {0}, {1}", bytes, text);
+                }, sendState);
+            }
+            catch
+            {
+                Console.WriteLine("Destination unavailable");
+            }
+        }
 
         /// <summary> This method can creat a new connection to a given machine.
         /// The parameter (<paramref name="targetEndPoint"/>) is used to give both ip and port for the machine.
@@ -150,9 +183,10 @@ namespace ConsoleApplication1
         public void CreatConnection(IPEndPoint targetEndPoint)
         {
             _socket.Connect(targetEndPoint);
-            Send(new Message(1, "CONNECTED").ToJson());
             IsConnected = true;
+            Send(new Message(1, "{\"connection_status\" : 1 }").ToJson());
         }
+        
 
         /// <summary> Send a message to the machine we are connected with.
         /// The message to send have to be specified in the (<paramref name="text"/>) parameter.
@@ -232,8 +266,8 @@ namespace ConsoleApplication1
                 {
                     var so = (State) ar.AsyncState;
                     var bytes = _socket.EndReceiveFrom(ar, ref _epFrom);
-                    _socket.BeginReceiveFrom(so.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv, so);
                     Handler(so, bytes);
+                    _socket.BeginReceiveFrom(so.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv, so);
                 }, _state);
             }
             catch
@@ -250,7 +284,41 @@ namespace ConsoleApplication1
                 Encoding.ASCII.GetString(so.Buffer, 0, nBytes));
         }
 
+        public IPEndPoint RemoteUser
+        {
+            get => _remoteUser;
+            set => _remoteUser = value;
+        }
+
         public bool IsActive { get; private set; }
         public bool IsConnected { get; set; }
+        
+
+        /// <summary>This method returns a random string with a length specified in the
+        /// (<paramref name="length"/>) parameter.
+        /// <example>For example:
+        /// <code>
+        ///    var myString = UdpSocket.CreateRandomString(5)
+        /// </code>
+        /// result in a string random string with length 5.
+        /// </example>
+        /// </summary>
+        ///<param name="length">The length of the random string</param>
+        ///<returns>A string random string with specified length</returns>
+        public static string CreateRandomString(int length)
+        {
+            var strBuild = new StringBuilder();  
+            var random = new Random();
+
+            for (var i = 0; i < length; i++)
+            {
+                var flt = random.NextDouble();
+                var shift = Convert.ToInt32(Math.Floor(25 * flt));
+                var letter = Convert.ToChar(shift + 65);
+                strBuild.Append(letter);  
+            }
+            return strBuild.ToString();
+        }
     }
+    
 }
