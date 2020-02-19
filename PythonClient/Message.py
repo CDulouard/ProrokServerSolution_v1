@@ -1,6 +1,7 @@
 from functools import reduce
 import json
-from typing import Union
+from typing import Union, Optional
+import hashlib
 
 
 class Message:
@@ -88,3 +89,12 @@ class Message:
         str : the Json object
         """
         return json.dumps(dict(self))
+
+    @staticmethod
+    def creat_connection_message(password: str, verbose: Optional[int] = 1, hash_pass: Optional[bool] = False) -> str:
+        if hash_pass:
+            hash_password = hashlib.sha1(bytes(password, "utf8")).hexdigest()
+        else:
+            hash_password = password
+
+        return '{"password": "' + str(hash_password) + '" , "verbose": ' + str(verbose) + '}'
