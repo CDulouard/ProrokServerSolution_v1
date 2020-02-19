@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom.Compiler;
 using System.Net;
 using System.Net.Configuration;
 using System.Net.Sockets;
@@ -286,6 +287,38 @@ namespace ConsoleApplication1
             }
         }
 
+        /// <summary>This method returns an IPEndPoint object with the ip and port from the EndPoint parameter
+        /// (<paramref name="ep"/>).
+        /// </summary>
+        ///<param name="ep">The EndPoint to convert into IPEndPoint</param>
+        ///<returns>The IPEndPoint converted from the EndPoint</returns>
+        public static IPEndPoint EndPointToIpEndPoint(EndPoint ep)
+        {
+            var strEp = ep.ToString();
+            var ipAdress = "";
+            var port = "";
+            var isIpAdress = true;
+
+            foreach (var c in strEp)
+            {
+                if (c != ':' && isIpAdress)
+                {
+                    ipAdress += c;
+                }
+                else if (c == ':')
+                {
+                    isIpAdress = false;
+                }
+                else
+                {
+                    port += c;
+                }
+            }
+
+
+            return new IPEndPoint(IPAddress.Parse(ipAdress), int.Parse(port));
+        }
+
         /// <summary>
         /// This method manage the behaviour of the server when it receive a message.
         /// </summary>
@@ -298,7 +331,42 @@ namespace ConsoleApplication1
             }
             else
             {
-                Console.WriteLine("rcv msg");
+                /* Write here the code to execute when a new Message is received */
+                var rcvMessage = new Message(rcvString);
+                switch (rcvMessage.id)
+                {
+                    case 1: // Ask for Connection
+                        /*
+                         * The incoming message must have two keys "password" and "verbose".
+                         * "password" is the hashed password with SHA1 algorithm.
+                         * "verbose" tell the server if he must send a reply. Set the value to 1 for a reply else 0.
+                         * Example request :
+                         * {"id": 1, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
+                         * If the password is correct then the default remote user is the origin of the request.
+                         */
+                        var temp = new ConnectionMessage(rcvMessage.message);
+                        if (temp.password.Equals(_hashPass))
+                        {
+                            _remoteUser = EndPointToIpEndPoint(_epFrom);
+                            if (temp.verbose == 1)
+                            {
+                                SendTo(_remoteUser, "{" + '"' + "connection_status" + '"' + ": 1}");
+                            }
+                        }
+                        else
+                        {
+                            if (temp.verbose == 1)
+                            {
+                                SendTo(_remoteUser, "{" + '"' + "connection_status" + '"' + ": 0}");
+                            }
+                        }
+
+                        break;
+                    default:
+                        Console.WriteLine("Unknown id");
+                        Console.WriteLine(rcvString);
+                        break;
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 import socket
 from threading import Thread
 from typing import Optional
+import hashlib
 import time
 
 
@@ -16,6 +17,7 @@ class UdpSocket(Thread):
     def start_socket(self, ip_address_server: str, port_server: int, password: Optional[str] = "") -> None:
         self.socket.bind((ip_address_server, port_server))
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.hash_password = hashlib.sha1(bytes(password, "utf8")).hexdigest()
         self.start()
 
     def stop_socket(self):
