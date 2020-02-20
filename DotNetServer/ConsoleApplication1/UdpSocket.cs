@@ -12,6 +12,7 @@ namespace ConsoleApplication1
 {
     public class UdpSocket
     {
+        private bool _verbose;
         private Socket _socket;
         private IPEndPoint _serverEndPoint;
         private int _bufSize;
@@ -54,7 +55,8 @@ namespace ConsoleApplication1
         /// <summary>
         /// This method starts the server with (<paramref name="ipAddressServer"/>) as ip
         /// on (<paramref name="portServer"/>) port. It is also possible to set a (<paramref name="password"/>) and
-        /// change the (<paramref name="bufferSize"/>).
+        /// change the (<paramref name="bufferSize"/>). Set (<paramref name="verbose"/>) to false to hide server's
+        /// messages.
         /// <example>For example:
         /// <code>
         ///    UdpSocket socket = new UdpSocket();
@@ -66,9 +68,11 @@ namespace ConsoleApplication1
         ///<param name="ipAddressServer">The ip address used to bind the socket on</param>
         ///<param name="portServer">The port used to bind the socket on</param>
         ///<param name="password">The password used for connection, default "" </param>
-        ///<param name="bufferSize">The size of the buffer used to send and receive message "" </param>
-        public void Start(string ipAddressServer, int portServer, string password = "", int bufferSize = 8192)
+        ///<param name="bufferSize">The size of the buffer used to send and receive message</param>
+        ///<param name="verbose">Set verbose to false if you don't want to see server's message in the console</param>
+        public void Start(string ipAddressServer, int portServer, string password = "", int bufferSize = 8192, bool verbose = true)
         {
+            _verbose = verbose;
             if (IsActive) return;
             _bufSize = bufferSize;
             _hashPass = CryptPass(password);
@@ -81,12 +85,17 @@ namespace ConsoleApplication1
             //  Set flags
             IsConnected = false;
             IsActive = true;
-
+            
             Receive();
+
+            if (_verbose)
+            {
+                Console.WriteLine("Server started on ip {0} and port {1}.", ipAddressServer, portServer);
+            }
         }
 
         /// <summary>
-        /// This method starts the server.
+        /// This method stops the server.
         /// <example>For example:
         /// <code>
         ///    UdpSocket socket = new UdpSocket();
@@ -122,22 +131,8 @@ namespace ConsoleApplication1
         ///<param name="text">The message to send as a string </param>
         public void SendTo(string targetIp, int targetPort, string text)
         {
-            try
-            {
-                var target = new IPEndPoint(IPAddress.Parse(targetIp), targetPort);
-                var data = Encoding.ASCII.GetBytes(text);
-                var sendState = new State(_bufSize);
-                _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, target, (ar) =>
-                {
-                    var so = (State) ar.AsyncState;
-                    var bytes = _socket.EndSend(ar);
-                    Console.WriteLine("SEND: {0}, {1}", bytes, text);
-                }, sendState);
-            }
-            catch
-            {
-                Console.WriteLine("Destination unavailable");
-            }
+            var target = new IPEndPoint(IPAddress.Parse(targetIp), targetPort);
+            SendToProcess(target, text);
         }
 
         /// <summary>
@@ -157,6 +152,27 @@ namespace ConsoleApplication1
         ///<param name="text">The message to send as a string </param>
         public void SendTo(IPEndPoint target, string text)
         {
+            SendToProcess(target, text);
+        }
+
+        /// <summary>
+        /// This method is the process used by the methods SendTo.
+        /// This method can send a message to a given machine. The IPEndPoint corresponding to the machine
+        /// is specified by the (<paramref name="target"/>) parameter.
+        /// The message is specified in the (<paramref name="text"/>) parameter.
+        /// <example>For example:
+        /// <code>
+        ///    UdpSocket socket = new UdpSocket();
+        ///    socket.Start("127.0.0.1", 27000);
+        ///    socket.SendTo("127.0.0.1", 27000, "Hello");
+        /// </code>
+        /// This code creat a new udpSocket and use it to send the message "Hello" to itself.
+        /// </example>
+        /// </summary>
+        ///<param name="target">The IPEndPoint used to bind the socket on</param>
+        ///<param name="text">The message to send as a string </param>
+        private void SendToProcess(IPEndPoint target, string text)
+        {
             try
             {
                 var data = Encoding.ASCII.GetBytes(text);
@@ -164,13 +180,29 @@ namespace ConsoleApplication1
                 _socket.BeginSendTo(data, 0, data.Length, SocketFlags.None, target, (ar) =>
                 {
                     var so = (State) ar.AsyncState;
-                    var bytes = _socket.EndSend(ar);
-                    Console.WriteLine("SEND: {0}, {1}", bytes, text);
+                    try
+                    {
+                        var bytes = _socket.EndSend(ar);
+                        if (_verbose)
+                        {
+                            Console.WriteLine("SEND: {0}, {1}", bytes, text);
+                        }
+                    }
+                    catch
+                    {
+                        if (_verbose)
+                        {
+                            Console.WriteLine("Unable to send message to: {0}", target);
+                        }
+                    }
                 }, sendState);
             }
             catch
             {
-                Console.WriteLine("Destination unavailable");
+                if (_verbose)
+                {
+                    Console.WriteLine("Destination unavailable");
+                }
             }
         }
 
@@ -218,7 +250,10 @@ namespace ConsoleApplication1
             {
                 var so = (State) ar.AsyncState;
                 var bytes = _socket.EndSend(ar);
-                Console.WriteLine("SEND: {0}, {1}", bytes, text);
+                if (_verbose)
+                {
+                    Console.WriteLine("SEND: {0}, {1}", bytes, text);
+                }
             }, _state);
         }
 
@@ -276,14 +311,34 @@ namespace ConsoleApplication1
                 _socket.BeginReceiveFrom(_state.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv = (ar) =>
                 {
                     var so = (State) ar.AsyncState;
-                    var bytes = _socket.EndReceiveFrom(ar, ref _epFrom);
-                    Handler(so, bytes);
-                    _socket.BeginReceiveFrom(so.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv, so);
+                    try
+                    {
+                        var bytes = _socket.EndReceiveFrom(ar, ref _epFrom);
+                        Handler(so, bytes);
+                    }
+                    catch
+                    {
+                        if (_verbose)
+                        {
+                            Console.WriteLine("Reception error");
+                        }
+                    }
+                    try
+                    {
+                        _socket.BeginReceiveFrom(so.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv, so);
+                    }
+                    catch
+                    {
+                        Receive();
+                    }
                 }, _state);
             }
             catch
             {
-                Console.WriteLine("Error");
+                if (_verbose)
+                {
+                    Console.WriteLine("Error");
+                }
             }
         }
 
@@ -327,7 +382,10 @@ namespace ConsoleApplication1
             var rcvString = Encoding.ASCII.GetString(so.Buffer, 0, nBytes);
             if (!Message.IsMessage(rcvString))
             {
-                Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes, rcvString);
+                if (_verbose)
+                {
+                    Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes, rcvString);
+                }
             }
             else
             {
@@ -363,8 +421,12 @@ namespace ConsoleApplication1
 
                         break;
                     default:
-                        Console.WriteLine("Unknown id");
-                        Console.WriteLine(rcvString);
+                        if (_verbose)
+                        {
+                            Console.WriteLine("Unknown id");
+                            Console.WriteLine(rcvString);
+                        }
+
                         break;
                 }
             }

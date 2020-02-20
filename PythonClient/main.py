@@ -10,5 +10,5 @@ if __name__ == "__main__":
         server.send_to(('127.0.0.1', 27000), str(Message(1, Message.creat_connection_message(server.hash_password, verbose=1))))
         print("Attente")
     server.send_to(('127.0.0.1', 27000), str(Message(2, "test")))
-    time.sleep(1)
+    # time.sleep(1)
     server.stop_socket()
