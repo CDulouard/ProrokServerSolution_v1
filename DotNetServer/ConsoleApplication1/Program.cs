@@ -12,11 +12,20 @@ namespace ConsoleApplication1
         public static void Main(string[] args)
         {
             var s = new UdpSocket();
-            s.Start("192.168.43.100", 50000, "test", verbose:true);
+            s.Start("127.0.0.1", 50000, "test", verbose:true);
             // s.Start("127.0.0.1", 27000, "test", verbose:true);
             
-            // s.SendTo("192.168.43.81", 50000, "retest");
+            s.SendTo("127.0.0.1", 50000, "ping");
+            Thread.Sleep(1000);
+            
+            var msgToSend = Message.CreateConnectionMessage("test", hashPass:true);
+            s.SendTo("127.0.0.1", 50000, new Message(101, msgToSend).ToJson());
+            Thread.Sleep(1000);
+            
+            // msgToSend = Message.CreateConnectionMessage("testi", hashPass:true);
+            // s.SendTo("127.0.0.1", 50000, new Message(101, msgToSend).ToJson());
             // Thread.Sleep(1000);
+            
             // s.SendTo("192.168.43.81", 50000, "retest");
             // Thread.Sleep(1000);
             // s.SendTo("128.0.0.1", 27000, "tst");
@@ -26,16 +35,17 @@ namespace ConsoleApplication1
             // s.SendTo("127.0.0.1", 27000, "retest");
             // Thread.Sleep(1000);
             // s.SendTo("127.0.0.1", 27000, "retest");
-            var msgToSend = Message.CreateConnectionMessage("test", hashPass:true);
-            Console.WriteLine(msgToSend);
+            
             // s.CreatConnection(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 27000));
             // Thread.Sleep(1000);
             // s.Send("text");
             // Thread.Sleep(1000);
             // s.SendTo("127.0.0.1", 27000, "pilou");
 
+            Console.WriteLine(s.Ping("127.0.0.1", 50000));
+
             // Thread.Sleep(1000);
-            // s.SendTo("127.0.0.1", 50000, "pilou");
+            // s.SendTo("127.0.0.1", 50000, "top");
             
 
             Console.ReadKey();

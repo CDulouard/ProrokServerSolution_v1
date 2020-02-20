@@ -24,6 +24,11 @@ namespace ConsoleApplication1
         private IPEndPoint _remoteUser;
         private string _hashPass;
 
+        private bool _rcvPong;
+        private bool _sendPing;
+        private int _tPong;
+
+
         private class State
         {
             public byte[] Buffer;
@@ -83,12 +88,16 @@ namespace ConsoleApplication1
             _socket.Bind(_serverEndPoint);
             _state = new State(bufferSize);
 
+            _tPong = DateTime.Now.Millisecond;
+            _rcvPong = false;
+            _sendPing = false;
+
             //  Set flags
             IsConnected = false;
             IsActive = true;
 
             Receive();
-
+            Thread.Sleep(1);
             if (_verbose)
             {
                 Console.WriteLine("Server started on ip {0} and port {1}.", ipAddressServer, portServer);
@@ -384,9 +393,26 @@ namespace ConsoleApplication1
             var rcvString = Encoding.ASCII.GetString(so.Buffer, 0, nBytes);
             if (!Message.IsMessage(rcvString))
             {
-                if (_verbose)
+                switch (rcvString)
                 {
-                    Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes, rcvString);
+                    case "ping":
+                        SendTo(EndPointToIpEndPoint(_epFrom), "pong");
+                        break;
+                    case "pong":
+                        if (_sendPing)
+                        {
+                            _tPong = DateTime.Now.Millisecond;
+                            _rcvPong = true;
+                        }
+
+                        break;
+                    default:
+                        if (_verbose)
+                        {
+                            Console.WriteLine("RECV: {0}: {1}, {2}", _epFrom.ToString(), nBytes, rcvString);
+                        }
+
+                        break;
                 }
             }
             else
@@ -395,13 +421,13 @@ namespace ConsoleApplication1
                 var rcvMessage = new Message(rcvString);
                 switch (rcvMessage.id)
                 {
-                    case 1: // Ask for Connection
+                    case 101: // Ask for Connection
                         /*
                          * The incoming message must have two keys "password" and "verbose".
                          * "password" is the hashed password with SHA1 algorithm.
                          * "verbose" tell the server if he must send a reply. Set the value to 1 for a reply else 0.
                          * Example request :
-                         * {"id": 1, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
+                         * {"id": 101, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
                          * If the password is correct then the default remote user is the origin of the request.
                          */
                         var temp = new ConnectionMessage(rcvMessage.message);
@@ -417,7 +443,7 @@ namespace ConsoleApplication1
                         {
                             if (temp.verbose == 1)
                             {
-                                SendTo(_remoteUser, "{" + '"' + "connection_status" + '"' + ": 0}");
+                                SendTo(EndPointToIpEndPoint(_epFrom), "{" + '"' + "connection_status" + '"' + ": 0}");
                             }
                         }
 
@@ -432,6 +458,62 @@ namespace ConsoleApplication1
                         break;
                 }
             }
+        }
+
+        /// <summary>This method returns the ping between two machines in ms.
+        /// (<paramref name="ipAddress"/>) is the ip address of the machine to ping.
+        /// (<paramref name="port"/>) is the port of the machine to ping.
+        /// (<paramref name="timeOut"/>) is the max time to wait between ping and pong.
+        /// </summary>
+        ///<param name="ipAddress">The is the ip address of the machine to ping.</param>
+        ///<param name="port">The is the port of the machine to ping.</param>
+        ///<param name="timeOut">is the max time to wait between ping and pong.</param>
+        ///<returns>The ping between two machines in ms</returns>
+        public int Ping(string ipAddress, int port, int timeOut = 1000)
+        {
+            var target = new IPEndPoint(IPAddress.Parse(ipAddress), port);
+            return PingProcess(target, timeOut);
+        }
+        
+        /// <summary>This method returns the ping between two machines in ms.
+        /// (<paramref name="target"/>) is the IPEndPoint corresponding to the machine to ping.
+        /// (<paramref name="timeOut"/>) is the max time to wait between ping and pong.
+        /// </summary>
+        ///<param name="target">The IPEndPoint corresponding to the machine to ping.</param>
+        ///<param name="timeOut">is the max time to wait between ping and pong.</param>
+        ///<returns>The ping between two machines in ms</returns>
+        public int Ping(IPEndPoint target, int timeOut = 1000)
+        {
+            return PingProcess(target, timeOut);
+        }
+
+        /// <summary>This method is used by the ping methods to compute the ping.
+        /// (<paramref name="target"/>) is the IPEndPoint corresponding to the machine to ping.
+        /// (<paramref name="timeOut"/>) is the max time to wait between ping and pong.
+        /// </summary>
+        ///<param name="target">The IPEndPoint corresponding to the machine to ping.</param>
+        ///<param name="timeOut">is the max time to wait between ping and pong.</param>
+        ///<returns>The ping between two machines in ms</returns>
+        private int PingProcess(IPEndPoint target, int timeOut = 1000)
+        {
+            var tPing = DateTime.Now.Millisecond;
+            _sendPing = true;
+            SendTo(target, "ping");
+            
+            while (! _rcvPong && DateTime.Now.Millisecond - tPing < timeOut)
+            {
+                
+            }
+
+            if (! _rcvPong)
+            {
+                _sendPing = false;
+                _rcvPong = false;
+                return int.MaxValue;
+            }
+            _sendPing = false;
+            _rcvPong = false;
+            return _tPong - tPing;
         }
 
         public IPEndPoint RemoteUser
@@ -470,7 +552,5 @@ namespace ConsoleApplication1
 
             return strBuild.ToString();
         }
-
-
     }
 }
