@@ -98,3 +98,14 @@ class Message:
             hash_password = password
 
         return '{"password": "' + str(hash_password) + '" , "verbose": ' + str(verbose) + '}'
+
+    @staticmethod
+    def spe_creat_connection_message(password: str, verbose: Optional[int] = 1,
+                                     hash_pass: Optional[bool] = False) -> str:
+        if hash_pass:
+            hash_password = hashlib.sha1(bytes(password, "utf8")).hexdigest()
+        else:
+            hash_password = password
+
+        return '{"port" : ' + str(50000) + ', "pass" : "' + str(hash_password) + '"}'
+
