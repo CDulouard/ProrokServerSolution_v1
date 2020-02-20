@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 
@@ -113,6 +114,24 @@ namespace ConsoleApplication1
             var result = bitValue == parity;
             parity = bitValue;
             return result;
+        }
+
+        /// <summary>
+        /// This method check if the given message length is equals to the attribute "message" length. Returns true if it is.
+        /// </summary>
+        ///<returns>A boolean that is true if the length is correct</returns>
+        public bool CheckMessageLen()
+        {
+            return message.Length == len;
+        }
+
+        /// <summary>
+        /// This method check if the both the parity bit and the message length are correct. Returns true if it is.
+        /// </summary>
+        ///<returns>A boolean that is true if the Message check is successful</returns>
+        public bool CheckMessage()
+        {
+            return CheckMessageLen() && CheckParityBit();
         }
 
         /// <summary>
