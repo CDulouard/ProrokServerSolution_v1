@@ -44,7 +44,7 @@ namespace ConsoleApplication1
             ComputeParityBit();
         }
 
-        
+
         /// <summary>
         /// This constructor is designed only to deserialize json strings. Please do not use.
         /// </summary>
@@ -109,7 +109,7 @@ namespace ConsoleApplication1
         ///<returns>A boolean that is true if the parity bit is correct</returns>
         public bool CheckParityBit()
         {
-            var bitValue = parity;    
+            var bitValue = parity;
             ComputeParityBit();
             var result = bitValue == parity;
             parity = bitValue;
@@ -158,6 +158,27 @@ namespace ConsoleApplication1
         public static bool IsMessage(string jsonString)
         {
             return new Message(jsonString).id != 0;
+        }
+
+        /// <summary>
+        /// This method creates a new message that can be recognized for the connection to this server.
+        /// (<paramref name="password"/>) is the password to send for connection.
+        /// (<paramref name="hashPass"/>) have to be set to true if you want to hash
+        /// (<paramref name="password"/>) value.
+        /// (<paramref name="verbose"/>) value have to be set to true if you want a reply from the server.
+        /// </summary>
+        ///<param name="password">The password to send. If it is not already hashed use (<paramref name="hashPass"/>) = true</param>
+        ///<param name="hashPass">If you want to hash the password before sending it set this value to true.</param>
+        ///<param name="verbose">Set this value to true if you want a reply from the server.</param>
+        ///<returns>A boolean which is true if the json string can be deserialized.</returns>
+        public static string CreateConnectionMessage(string password, int verbose = 1, bool hashPass = false)
+        {
+            var hashPassword = hashPass ? UdpSocket.CryptPass(password) : password;
+
+            var messageToSend = "{" + '"' + "password" + '"' + " : " + '"' + hashPassword + '"' + ", " + '"' +
+                                "verbose" + '"' + " : " +
+                                verbose + "}";
+            return messageToSend;
         }
     }
 }

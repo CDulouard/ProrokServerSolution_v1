@@ -70,7 +70,8 @@ namespace ConsoleApplication1
         ///<param name="password">The password used for connection, default "" </param>
         ///<param name="bufferSize">The size of the buffer used to send and receive message</param>
         ///<param name="verbose">Set verbose to false if you don't want to see server's message in the console</param>
-        public void Start(string ipAddressServer, int portServer, string password = "", int bufferSize = 8192, bool verbose = true)
+        public void Start(string ipAddressServer, int portServer, string password = "", int bufferSize = 8192,
+            bool verbose = true)
         {
             _verbose = verbose;
             if (IsActive) return;
@@ -85,7 +86,7 @@ namespace ConsoleApplication1
             //  Set flags
             IsConnected = false;
             IsActive = true;
-            
+
             Receive();
 
             if (_verbose)
@@ -268,7 +269,7 @@ namespace ConsoleApplication1
         /// </summary>
         ///<param name="password">The password to hash</param>
         ///<returns>A string which is the hashed password</returns>
-        private static string CryptPass(string password)
+        public static string CryptPass(string password)
         {
             var bytes = Encoding.UTF8.GetBytes(password);
             var sha1 = SHA1.Create();
@@ -323,6 +324,7 @@ namespace ConsoleApplication1
                             Console.WriteLine("Reception error");
                         }
                     }
+
                     try
                     {
                         _socket.BeginReceiveFrom(so.Buffer, 0, _bufSize, SocketFlags.None, ref _epFrom, _recv, so);
@@ -468,5 +470,7 @@ namespace ConsoleApplication1
 
             return strBuild.ToString();
         }
+
+
     }
 }
