@@ -1,7 +1,6 @@
 using System;
 using System.CodeDom.Compiler;
 using System.Net;
-using System.Net.Configuration;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -390,6 +389,10 @@ namespace ConsoleApplication1
         /// </summary>
         private void Handler(State so, int nBytes)
         {
+            /*
+             * Message id = 101 incoming request for connection
+             * Message id = 201 answer to a connection request
+             */
             var rcvString = Encoding.ASCII.GetString(so.Buffer, 0, nBytes);
             if (!Message.IsMessage(rcvString))
             {
@@ -436,14 +439,14 @@ namespace ConsoleApplication1
                             _remoteUser = EndPointToIpEndPoint(_epFrom);
                             if (temp.verbose == 1)
                             {
-                                SendTo(_remoteUser, "{" + '"' + "connection_status" + '"' + ": 1}");
+                                SendTo(_remoteUser, new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
                             }
                         }
                         else
                         {
                             if (temp.verbose == 1)
                             {
-                                SendTo(EndPointToIpEndPoint(_epFrom), "{" + '"' + "connection_status" + '"' + ": 0}");
+                                SendTo(EndPointToIpEndPoint(_epFrom), new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
                             }
                         }
 
