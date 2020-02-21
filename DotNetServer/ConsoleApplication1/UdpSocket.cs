@@ -54,6 +54,7 @@ namespace ConsoleApplication1
             IsConnected = false;
             IsActive = false;
             _recv = null;
+            _remoteUser = null;
         }
 
         /// <summary>
@@ -390,12 +391,20 @@ namespace ConsoleApplication1
         private void Handler(State so, int nBytes)
         {
             /*
+             * Message id starting by 1xx are post message (message that ask for changing something on the server)
+             * Message id starting by 2xx are answer message
+             * Message id starting by 3xx are get message (message that ask to know something from the server)
+             *
+             * 
              * Message id = 101 incoming request for connection
              * Message id = 201 answer to a connection request
              */
             var rcvString = Encoding.ASCII.GetString(so.Buffer, 0, nBytes);
             if (!Message.IsMessage(rcvString))
             {
+                /*
+                 * This condition means the incoming message is not a message object
+                 */
                 switch (rcvString)
                 {
                     case "ping":
@@ -418,47 +427,90 @@ namespace ConsoleApplication1
                         break;
                 }
             }
+            else if (!new Message(rcvString).CheckMessage())
+            {
+                /*
+                 * This condition means the message is a corrupted Message object
+                 */
+            }
             else
             {
+                /*
+                 * This condition means the message is a a Message object and it is not corrupted
+                 */
+
                 /* Write here the code to execute when a new Message is received */
                 var rcvMessage = new Message(rcvString);
-                switch (rcvMessage.id)
+
+                if (_remoteUser != null && EndPointToIpEndPoint(_epFrom).Equals(_remoteUser))
                 {
-                    case 101: // Ask for Connection
-                        /*
-                         * The incoming message must have two keys "password" and "verbose".
-                         * "password" is the hashed password with SHA1 algorithm.
-                         * "verbose" tell the server if he must send a reply. Set the value to 1 for a reply else 0.
-                         * Example request :
-                         * {"id": 101, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
-                         * If the password is correct then the default remote user is the origin of the request.
-                         */
-                        var temp = new ConnectionMessage(rcvMessage.message);
-                        if (temp.password.Equals(_hashPass))
-                        {
-                            _remoteUser = EndPointToIpEndPoint(_epFrom);
-                            if (temp.verbose == 1)
+                    /*
+                     * This condition means the source of the incoming message is the identified remote user
+                     */
+                    switch (rcvMessage.id)
+                    {
+                        case 101: // Ask for Connection
+                            /*
+                             * The incoming message comes from an user already connected.
+                             */
+                            SendTo(_remoteUser,
+                                new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                            break;
+                        default:
+                            if (_verbose)
                             {
-                                SendTo(_remoteUser, new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                Console.WriteLine("Unknown id");
+                                Console.WriteLine(rcvString);
                             }
-                        }
-                        else
-                        {
-                            if (temp.verbose == 1)
+
+                            break;
+                    }
+                }
+                else
+                {
+                    /*
+                     * This condition means the source of the message is not the remote user
+                     */
+                    switch (rcvMessage.id)
+                    {
+                        case 101: // Ask for Connection
+                            /*
+                             * The incoming message must have two keys "password" and "verbose".
+                             * "password" is the hashed password with SHA1 algorithm.
+                             * "verbose" tell the server if he must send a reply. Set the value to 1 for a reply else 0.
+                             * Example request :
+                             * {"id": 101, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
+                             * If the password is correct then the default remote user is the origin of the request.
+                             */
+                            var temp = new ConnectionMessage(rcvMessage.message);
+                            if (temp.password.Equals(_hashPass))
                             {
-                                SendTo(EndPointToIpEndPoint(_epFrom), new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                _remoteUser = EndPointToIpEndPoint(_epFrom);
+                                if (temp.verbose == 1)
+                                {
+                                    SendTo(_remoteUser,
+                                        new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                }
                             }
-                        }
+                            else
+                            {
+                                if (temp.verbose == 1)
+                                {
+                                    SendTo(EndPointToIpEndPoint(_epFrom),
+                                        new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                }
+                            }
 
-                        break;
-                    default:
-                        if (_verbose)
-                        {
-                            Console.WriteLine("Unknown id");
-                            Console.WriteLine(rcvString);
-                        }
+                            break;
+                        default:
+                            if (_verbose)
+                            {
+                                Console.WriteLine("Unknown id");
+                                Console.WriteLine(rcvString);
+                            }
 
-                        break;
+                            break;
+                    }
                 }
             }
         }
@@ -477,7 +529,7 @@ namespace ConsoleApplication1
             var target = new IPEndPoint(IPAddress.Parse(ipAddress), port);
             return PingProcess(target, timeOut);
         }
-        
+
         /// <summary>This method returns the ping between two machines in ms.
         /// (<paramref name="target"/>) is the IPEndPoint corresponding to the machine to ping.
         /// (<paramref name="timeOut"/>) is the max time to wait between ping and pong.
@@ -502,18 +554,18 @@ namespace ConsoleApplication1
             var tPing = DateTime.Now.Millisecond;
             _sendPing = true;
             SendTo(target, "ping");
-            
-            while (! _rcvPong && DateTime.Now.Millisecond - tPing < timeOut)
+
+            while (!_rcvPong && DateTime.Now.Millisecond - tPing < timeOut)
             {
-                
             }
 
-            if (! _rcvPong)
+            if (!_rcvPong)
             {
                 _sendPing = false;
                 _rcvPong = false;
                 return int.MaxValue;
             }
+
             _sendPing = false;
             _rcvPong = false;
             return _tPong - tPing;
