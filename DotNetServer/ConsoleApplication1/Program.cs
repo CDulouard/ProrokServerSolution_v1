@@ -13,14 +13,42 @@ namespace ConsoleApplication1
         public static void Main(string[] args)
         {
             var s = new UdpSocket();
-            // s.Start("127.0.0.1", 50000, "test", verbose:true);
-            // s.Start("127.0.0.1", 27000, "test", verbose:true);
+            s.Start("127.0.0.1", 50000, "test", verbose:true);
             
-            // s.SendTo("127.0.0.1", 50000, "ping");
+            Thread.Sleep(1000);
+            var msgToSend = Message.CreateConnectionMessage("test", hashPass:true);
+            s.SendTo("127.0.0.1", 50000, new Message(101, msgToSend).ToJson());
+            Thread.Sleep(1000);
+            
+            //
+            // var s = new UdpSocket();
+            // s.Start("192.168.43.100", 27000, "test", verbose:true);
+            //
+            // Thread.Sleep(1000);
+            // var msgToSend = Message.CreateConnectionMessage("test", hashPass:true);
+            // s.SendTo("192.168.43.81", 50000, new Message(101, msgToSend).ToJson());
             // Thread.Sleep(1000);
             //
+            // s.SendTo("192.168.43.81", 50000, new Message(301, "").ToJson());
+            // Thread.Sleep(1000);
+            //
+            // s.SendTo("192.168.43.81", 50000, new Message(102, "{\"servomotors_target_position\":{\"booby\":0.0,\"lololol\":0.0},\"cc_motors_target_speed\":{\"WLF\":0.0,\"WRF\":0.0,\"WRB\":0.0,\"WLB\":0.0}}").ToJson());
+            // Thread.Sleep(1000);
+            
+
+
+            // s.Start("192.168.43.100", 27000, "test", verbose:true);
+            //
+            // Thread.Sleep(1000);
+            // s.SendTo("192.168.43.81", 50000, "ping");
+            // Thread.Sleep(1000);
+            //
+            
             // var msgToSend = Message.CreateConnectionMessage("test", hashPass:true);
-            // s.SendTo("127.0.0.1", 50000, new Message(101, msgToSend).ToJson());
+            // s.SendTo("192.168.43.81", 50000, new Message(101, msgToSend).ToJson());
+            // Thread.Sleep(1000);
+            // //
+            // s.SendTo("192.168.43.81", 50000, new Message(301, "").ToJson());
             // Thread.Sleep(1000);
             
             // msgToSend = Message.CreateConnectionMessage("testi", hashPass:true);
@@ -50,20 +78,9 @@ namespace ConsoleApplication1
             
 
             // Console.ReadKey();
-
-            var servoDico = new Dictionary<string, int>();
-            servoDico["motor1"] = 50;
-            servoDico["motor2"] = 100;
-            servoDico["motor3"] = 150;
-            var ccDico = new Dictionary<string, int>();
-            ccDico["motor1"] = 50;
-            ccDico["motor2"] = 100;
-            ccDico["motor3"] = 150;
-            var test = new RobotDataMessage(servoDico, ccDico);
-            Console.WriteLine(test.ToJson());
             
             
-            Console.WriteLine(new RobotDataMessage(test.ToJson()).ToJson());
+            // Console.WriteLine(new RobotDataMessage(test.ToJson()).ToJson());
 
         }
     }

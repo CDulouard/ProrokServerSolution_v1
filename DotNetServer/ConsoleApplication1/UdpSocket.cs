@@ -482,25 +482,34 @@ namespace ConsoleApplication1
                              * {"id": 101, "parity": 1, "len": 71, "message": "{\"password\": \"a94a8fe5ccb19ba61c4c0873d391e987982fbbd3\" , \"verbose\": 1}"}
                              * If the password is correct then the default remote user is the origin of the request.
                              */
-                            var temp = new ConnectionMessage(rcvMessage.message);
-                            if (temp.password.Equals(_hashPass))
+                            try
                             {
-                                _remoteUser = EndPointToIpEndPoint(_epFrom);
-                                if (temp.verbose == 1)
+                                var temp = new ConnectionMessage(rcvMessage.message);
+                                if (temp.password.Equals(_hashPass))
                                 {
-                                    SendTo(_remoteUser,
-                                        new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                    _remoteUser = EndPointToIpEndPoint(_epFrom);
+                                    if (temp.verbose == 1)
+                                    {
+                                        SendTo(_remoteUser,
+                                            new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                    }
+                                }
+                                else
+                                {
+                                    if (temp.verbose == 1)
+                                    {
+                                        SendTo(EndPointToIpEndPoint(_epFrom),
+                                            new Message(201, "{" + '"' + "connection_status" + '"' + ": 0}").ToJson());
+                                    }
                                 }
                             }
-                            else
+                            catch
                             {
-                                if (temp.verbose == 1)
+                                if (_verbose)
                                 {
-                                    SendTo(EndPointToIpEndPoint(_epFrom),
-                                        new Message(201, "{" + '"' + "connection_status" + '"' + ": 1}").ToJson());
+                                    Console.WriteLine("Message format not correct for connection");
                                 }
                             }
-
                             break;
                         default:
                             if (_verbose)
