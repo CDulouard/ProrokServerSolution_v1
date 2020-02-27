@@ -11,7 +11,7 @@ namespace ConsoleApplication1
         public int verbose;
 
         [JsonConstructor]
-        ConnectionMessage(string password, int verbose)
+        public ConnectionMessage(string password, int verbose)
         {
             this.password = password;
             this.verbose = verbose;

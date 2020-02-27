@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security;
@@ -161,7 +162,8 @@ namespace ConsoleApplication1
         }
 
         /// <summary>
-        /// This method creates a new message that can be recognized for the connection to this server.
+        /// This method creates a new text  for a Message object that can be recognized for the connection to this
+        /// server.
         /// (<paramref name="password"/>) is the password to send for connection.
         /// (<paramref name="hashPass"/>) have to be set to true if you want to hash
         /// (<paramref name="password"/>) value.
@@ -170,8 +172,7 @@ namespace ConsoleApplication1
         ///<param name="password">The password to send. If it is not already hashed use (<paramref name="hashPass"/>) = true</param>
         ///<param name="hashPass">If you want to hash the password before sending it set this value to true.</param>
         ///<param name="verbose">Set this value to true if you want a reply from the server.</param>
-        ///<returns>A boolean which is true if the json string can be deserialized.</returns>
-        public static string CreateConnectionMessage(string password, int verbose = 1, bool hashPass = false)
+        public static string CreateConnectionText(string password, int verbose = 1, bool hashPass = false)
         {
             var hashPassword = hashPass ? UdpSocket.CryptPass(password) : password;
 
@@ -179,6 +180,44 @@ namespace ConsoleApplication1
                                 "verbose" + '"' + " : " +
                                 verbose + "}";
             return messageToSend;
+        }
+
+        /// <summary>
+        /// This method creates a Message object that can be recognized for the connection to this
+        /// server.
+        /// (<paramref name="password"/>) is the password to send for connection.
+        /// (<paramref name="hashPass"/>) have to be set to true if you want to hash
+        /// (<paramref name="password"/>) value.
+        /// (<paramref name="verbose"/>) value have to be set to true if you want a reply from the server.
+        /// </summary>
+        ///<param name="password">The password to send. If it is not already hashed use (<paramref name="hashPass"/>) = true</param>
+        ///<param name="hashPass">If you want to hash the password before sending it set this value to true.</param>
+        ///<param name="verbose">Set this value to true if you want a reply from the server.</param>
+        public static Message CreateConnectionMessage(string password, int verbose = 1, bool hashPass = false)
+        {
+            return new Message(101, CreateConnectionText(password, verbose, hashPass));
+        }
+
+        /// <summary>
+        /// This method creat a connection request Message to send to a remote machine
+        /// using old Prorok's communication protocol.
+        /// (<paramref name="pass"/>) is the password to send for connection.
+        /// (<paramref name="port"/>) is the port you want the remote machine send its reply on.
+        /// (<paramref name="hashPass"/>) Set this value to true if you want to hash the given password.
+        /// </summary>
+        ///<param name="pass">The password to send. If it is not already hashed
+        /// use (<paramref name="hashPass"/>) = true</param>
+        ///<param name="port">The port you want the remote machine send its answer</param>
+        ///<param name="hashPass">If you want to hash the password before sending it set this value to true.</param>
+        public static Message CreateOldConnectionMessage(string pass, int port, bool hashPass = false)
+        {
+            return new Message(1, new OldConnectionMessage(pass, port, hashPass).ToJson());
+        }
+
+        public static Message CreateOldCommandsMessage(Dictionary<string, int> positions = null,
+            Dictionary<string, int> torques = null)
+        {
+            return new Message(5, new OldRobotData(positions, torques).ToJson());
         }
     }
 }
