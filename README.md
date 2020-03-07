@@ -22,5 +22,5 @@ The project is not designed to be used without editing the code. To use it you s
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/CDulouard/ProrokSim_v2/blob/master/LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/CDulouard/ProrokServerSolution_v1/blob/master/LICENSE) file for details
 
