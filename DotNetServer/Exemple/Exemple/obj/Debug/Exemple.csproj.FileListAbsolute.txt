@@ -1,0 +1,5 @@
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Exemple\Exemple\bin\Debug\Exemple.exe
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Exemple\Exemple\bin\Debug\Exemple.pdb
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Exemple\Exemple\obj\Debug\Exemple.csprojAssemblyReference.cache
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Exemple\Exemple\obj\Debug\Exemple.exe
+D:\Clement\Documents\ProgrammingProjects\ProrokServerSolution_v1\DotNetServer\Exemple\Exemple\obj\Debug\Exemple.pdb
