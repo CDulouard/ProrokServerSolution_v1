@@ -83,10 +83,20 @@ namespace ConsoleApplication1
             _bufSize = bufferSize;
             _hashPass = CryptPass(password);
             // Start socket
-            _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
-            _serverEndPoint = new IPEndPoint(IPAddress.Parse(ipAddressServer), portServer);
-            _socket.Bind(_serverEndPoint);
-            _state = new State(bufferSize);
+            try
+            {
+                _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.ReuseAddress, true);
+                _serverEndPoint = new IPEndPoint(IPAddress.Parse(ipAddressServer), portServer);
+                _socket.Bind(_serverEndPoint);
+                _state = new State(bufferSize);
+            }
+            catch (Exception)
+            {
+                IsActive = false;
+                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                return;
+            }
+
 
             _tPong = DateTime.Now.Millisecond;
             _rcvPong = false;
@@ -183,6 +193,7 @@ namespace ConsoleApplication1
         ///<param name="text">The message to send as a string </param>
         private void SendToProcess(IPEndPoint target, string text)
         {
+            if (!IsActive) return;
             try
             {
                 var data = Encoding.ASCII.GetBytes(text);
@@ -254,6 +265,7 @@ namespace ConsoleApplication1
         ///<param name="text">The message to send as a string </param>
         public void Send(string text)
         {
+            if (!IsActive) return;
             if (!IsConnected) return;
             var data = Encoding.ASCII.GetBytes(text);
             _socket.BeginSend(data, 0, data.Length, SocketFlags.None, (ar) =>
@@ -510,6 +522,7 @@ namespace ConsoleApplication1
                                     Console.WriteLine("Message format not correct for connection");
                                 }
                             }
+
                             break;
                         default:
                             if (_verbose)
