@@ -24,7 +24,8 @@ namespace ConsoleApplication1
         private string _hashPass;
 
         private IPEndPoint _lastCheckEndPoint;
-        private int _lastCheckTime;
+        private long _lastCheckTime;
+
 
         private bool _rcvPong;
         private bool _sendPing;
@@ -376,6 +377,7 @@ namespace ConsoleApplication1
         ///<returns>The IPEndPoint converted from the EndPoint</returns>
         public static IPEndPoint EndPointToIpEndPoint(EndPoint ep)
         {
+            if (ep == null) return null;
             var strEp = ep.ToString();
             var ipAdress = "";
             var port = "";
@@ -439,7 +441,7 @@ namespace ConsoleApplication1
                         break;
                     case "ok":
                         _lastCheckEndPoint = EndPointToIpEndPoint(_epFrom);
-                        _lastCheckTime = DateTime.Now.Millisecond;
+                        _lastCheckTime = DateTime.Now.Ticks;
                         break;
                     default:
                         if (_verbose)
@@ -660,7 +662,7 @@ namespace ConsoleApplication1
         /// <summary>This method returns the time of the last check if an answer was received
         /// </summary>
         ///<returns>The time of the last check</returns>
-        public int GetLastCheckTime()
+        public long GetLastCheckTime()
         {
             return _lastCheckTime;
         }
