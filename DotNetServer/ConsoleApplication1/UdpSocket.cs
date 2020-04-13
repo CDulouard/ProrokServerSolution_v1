@@ -23,6 +23,9 @@ namespace ConsoleApplication1
         private IPEndPoint _remoteUser;
         private string _hashPass;
 
+        private IPEndPoint _lastCheckEndPoint;
+        private int _lastCheckTime;
+
         private bool _rcvPong;
         private bool _sendPing;
         private int _tPong;
@@ -79,7 +82,7 @@ namespace ConsoleApplication1
             bool verbose = true)
         {
             _verbose = verbose;
-            if (IsActive) return;
+            if (IsActive) Stop();
             _bufSize = bufferSize;
             _hashPass = CryptPass(password);
             // Start socket
@@ -130,6 +133,7 @@ namespace ConsoleApplication1
             if (!IsActive) return;
             _socket.Close();
             IsActive = false;
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         }
 
 
@@ -430,6 +434,13 @@ namespace ConsoleApplication1
                         }
 
                         break;
+                    case "check":
+                        SendTo(EndPointToIpEndPoint(_epFrom), "ok");
+                        break;
+                    case "ok":
+                        _lastCheckEndPoint = EndPointToIpEndPoint(_epFrom);
+                        _lastCheckTime = DateTime.Now.Millisecond;
+                        break;
                     default:
                         if (_verbose)
                         {
@@ -628,6 +639,30 @@ namespace ConsoleApplication1
             }
 
             return strBuild.ToString();
+        }
+
+        /// <summary>This method returns the EndPoint the socket is bounded to
+        /// </summary>
+        ///<returns>The EndPoint of the socket</returns>
+        public IPEndPoint GetServerEndPoint()
+        {
+            return _serverEndPoint;
+        }
+
+        /// <summary>This method returns the EndPoint of the last check if an answer was received
+        /// </summary>
+        ///<returns>The EndPoint of the last check</returns>
+        public EndPoint GetLastCheckEndPoint()
+        {
+            return _lastCheckEndPoint;
+        }
+
+        /// <summary>This method returns the time of the last check if an answer was received
+        /// </summary>
+        ///<returns>The time of the last check</returns>
+        public int GetLastCheckTime()
+        {
+            return _lastCheckTime;
         }
     }
 }

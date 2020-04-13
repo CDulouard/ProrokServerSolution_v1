@@ -13,10 +13,17 @@ namespace ConsoleApplication1
     {
         public static void Main(string[] args)
         {
-            var sIp = "128.0.0.1";
+            var sIp = "127.0.0.1";
             var sPort = 50000;
             var s = new UdpSocket();
-            Console.WriteLine(s.IsActive);
+
+            s.Start(sIp, sPort, "test", verbose: true);
+            Thread.Sleep(1000);
+            s.SendTo(sIp, sPort, "ping");
+            Thread.Sleep(1000);
+            
+            s.Stop();
+            Thread.Sleep(1000);
             s.Start(sIp, sPort, "test", verbose: true);
             Thread.Sleep(1000);
             s.SendTo(sIp, sPort, "ping");
