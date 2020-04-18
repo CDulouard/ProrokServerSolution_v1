@@ -1,4 +1,5 @@
 from UdpSocket import UdpSocket
+import datetime
 from Message import Message
 import time
 
@@ -19,16 +20,28 @@ if __name__ == "__main__":
     #     print("Attente")
     # time.sleep(1)
 
-    server = UdpSocket()
-    address_robot = ("192.168.50.1", 50056)
-
-    server.start_socket("192.168.50.85", 50000, "test")
-
-    for i in range(5):
-        time.sleep(.2)
-        server.old_connection(address_robot, "test")
-        print("Attente")
-    time.sleep(1)
+    # server = UdpSocket()
+    # address_robot = ("192.168.50.1", 50056)
+    #
+    # server.start_socket("192.168.50.85", 50000, "test")
+    #
+    # for i in range(5):
+    #     time.sleep(.2)
+    #     server.old_connection(address_robot, "test")
+    #     print("Attente")
+    # time.sleep(1)
     # server.send_old_commands(address_robot)
-    server.send_animation(address_robot, r"./Default_Clovis_routine.xlsx")
+    # server.send_animation(address_robot, r"./Default_Clovis_routine.xlsx")
+    # server.stop_socket()
+
+    server = UdpSocket()
+    time.sleep(1.5)
+    print(server.time_since_last_check())
+    print(server.last_check_ep)
+    server.start_socket('127.0.0.1', 27000, "test")
+    time.sleep(0.5)
+    server.check(('12.0.0.1', 27000))
+    time.sleep(1)
+    print(server.time_since_last_check())
+    print(server.last_check_ep)
     server.stop_socket()
