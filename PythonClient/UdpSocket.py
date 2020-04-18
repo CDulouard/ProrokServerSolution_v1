@@ -1,8 +1,9 @@
 import socket
 from threading import Thread
-from typing import Optional
+from typing import Optional, Tuple
 import hashlib
 import time
+import datetime
 from Message import Message
 from robotDataOld import RobotDataOld
 import pandas as pd
@@ -20,8 +21,10 @@ class UdpSocket(Thread):
         self.buffer_size: int = buffer_size
         self.hash_password: str = ""
         self.is_running: bool = False
-        self.port = None
-        self.ip_address = None
+        self.port: int = None
+        self.ip_address: str = None
+        self.last_check_ep: Tuple[str, int] = None
+        self.last_check_time: datetime.datetime = datetime.datetime.now()
 
     def start_socket(self, ip_address_server: str, port_server: int, password: Optional[str] = "") -> None:
         """
@@ -66,7 +69,6 @@ class UdpSocket(Thread):
             try:
                 data, address = self.socket.recvfrom(1024)  # buffer size is 1024 bytes
                 self.handler(data, address)
-
             except OSError:
                 pass
             except:
@@ -79,8 +81,19 @@ class UdpSocket(Thread):
         :param address: The address and port of the remote machine that send the message
         :return: None
         """
-        print(f"From : \nip address : {address[0]}\nport : {address[1]}")
-        print("received message:", data)
+        rcv_string = data.decode("UTF_8")
+        print(f"rcv : {rcv_string}")
+
+        if not Message.is_message(rcv_string):
+            # If the received message is not a message object
+            if rcv_string == "check":
+                self.send_to((address[0], address[1]), "ok")
+            if rcv_string == "ok":
+                self.last_check_time = datetime.datetime.now()
+                self.last_check_ep = (address[0], address[1])
+
+        # print(f"From : \nip address : {address[0]}\nport : {address[1]}")
+        # print("received message:", data)
 
     def send_to(self, address_port, message: str) -> None:
         """
@@ -89,7 +102,10 @@ class UdpSocket(Thread):
         :param message: A string message to send
         :return: None
         """
-        self.socket.sendto(str.encode(message, 'utf8'), address_port)
+        try:
+            self.socket.sendto(str.encode(message, 'utf8'), address_port)
+        except OSError:
+            pass
 
     def old_connection(self, address_port, password: str, hash_pass: Optional[bool] = True) -> None:
         """
@@ -157,3 +173,27 @@ class UdpSocket(Thread):
             print(pos)
             self.send_old_commands(address_port, pos)
             time.sleep(list(df.iloc[i])[1] / 1000)
+
+    def time_since_last_check(self, unit="ms") -> float:
+        """
+        Returns time since last check in s, ms or µs
+        :param unit: Unit used for delta time
+        :return: Time since last check in the given unit
+        """
+        if unit == "s":
+            return (datetime.datetime.now() - self.last_check_time).total_seconds()
+        if unit == "ms":
+            return (datetime.datetime.now() - self.last_check_time).total_seconds() * 1_000
+        if unit == "µs":
+            return (datetime.datetime.now() - self.last_check_time).total_seconds() * 1_000_000
+        else:
+            return None
+
+    def check(self, ep: Tuple[str, int]) -> None:
+        """
+        Send check message to given End Point
+        :param ep: The ip address and the port where the message must be sent
+        :return:
+        """
+        self.send_to(ep, "check")
+

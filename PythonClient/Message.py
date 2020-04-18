@@ -22,16 +22,6 @@ class Message:
         self.message = message
         self.content = dict()
 
-    def create_from_json(msg: str):
-        """
-        Load a json file and store it in a message object
-        :return:
-        """
-        json_dict = json.loads(msg)
-        rcv_msg = Message(0, "")
-        rcv_msg.import_json(json_dict)
-        return rcv_msg
-
     def verif(self) -> bool:
         """
         Check if the message is corrupted
@@ -45,21 +35,25 @@ class Message:
         else:
             return True
 
-    def check_message(data_string: str):
+    @staticmethod
+    def from_json(data_string: str):
         """
         Check if the received message can be transform in a Message object, if it is possible, return
-        a Message containing the received data, if it failed it return an empty Message with ID = 0
+        a Message containing the received data, if it failed it return None
         :return:
         A Message object
         """
+        message = Message(0, "")
         try:
-            message = Message.create_from_json(data_string)
-        except ValueError:
-            return Message(0, "")
-        if message.verif():
-            return message
-        else:
-            return Message(0, "")
+
+            json_dict = json.loads(data_string)
+            message.import_json(json_dict)
+            if message.verif():
+                return message
+            else:
+                return None
+        except:
+            return None
 
     def import_json(self, json_in):
         """
@@ -102,6 +96,11 @@ class Message:
     @staticmethod
     def spe_creat_connection_message(password: str, port: Optional[int] = 50000,
                                      hash_pass: Optional[bool] = False) -> str:
+        """
+        Create an old version of connection message to connect to Clovis Mini
+        :return:
+        A message that will be understood in the old software of Clovis Mini
+        """
         if hash_pass:
             hash_password = hashlib.sha1(bytes(password, "utf8")).hexdigest()
         else:
@@ -109,3 +108,11 @@ class Message:
 
         return '{"port" : ' + str(port) + ', "pass" : "' + str(hash_password) + '"}'
 
+    @staticmethod
+    def is_message(data_string: str):
+        """
+        Check if the received message is a Message object.
+        :return:
+        True if it is a Message object else False
+        """
+        return not Message.from_json(data_string) is None
