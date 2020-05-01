@@ -34,13 +34,13 @@ namespace ConsoleApplication1
             this.id = id;
             this.message = message;
             len = message.Length;
-            for (var i = 0; i < message.Length - 1; i++)
-            {
-                if (message[i] == '\\' && message[i + 1] == '\"')
-                {
-                    len -= 1;
-                }
-            }
+            // for (var i = 0; i < message.Length - 1; i++)
+            // {
+            //     if (message[i] == '\\' && message[i + 1] == '\"')
+            //     {
+            //         len -= 1;
+            //     }
+            // }
 
             ComputeParityBit();
         }

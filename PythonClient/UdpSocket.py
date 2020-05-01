@@ -67,7 +67,7 @@ class UdpSocket(Thread):
         """
         while self.is_running:
             try:
-                data, address = self.socket.recvfrom(1024)  # buffer size is 1024 bytes
+                data, address = self.socket.recvfrom(self.buffer_size)  # buffer size is 1024 bytes
                 self.handler(data, address)
             except OSError:
                 pass
